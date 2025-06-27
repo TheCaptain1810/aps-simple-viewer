@@ -15,6 +15,7 @@
     "@aps_sdk/authentication": "^1.0.0",
     "@aps_sdk/model-derivative": "^1.1.0",
     "@aps_sdk/oss": "^1.1.1",
+    "@types/forge-viewer": "^7.99.1",
     "dotenv": "^16.6.0",
     "express": "^5.1.0",
     "express-formidable": "^1.2.0"
