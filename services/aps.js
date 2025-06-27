@@ -85,3 +85,44 @@ service.uploadObject = async (objectName, filePath) => {
   });
   return obj;
 };
+
+service.translateObject = async (urn, rootFilename) => {
+  const accessToken = await getInternalToken();
+  const job = await modelDerivativeClient.startJob(
+    {
+      input: {
+        urn,
+        compressedUrn: !!rootFilename,
+        rootFilename,
+      },
+      output: {
+        formats: [
+          {
+            views: [View._2d, View._3d],
+            type: OutputType.Svf2,
+          },
+        ],
+      },
+    },
+    { accessToken }
+  );
+  return job.result;
+};
+
+service.getManifest = async (urn) => {
+  const accessToken = await getInternalToken();
+  try {
+    const manifest = await modelDerivativeClient.getManifest(urn, {
+      accessToken,
+    });
+    return manifest;
+  } catch (err) {
+    if (err.axiosError.response.status === 404) {
+      return null;
+    } else {
+      throw err;
+    }
+  }
+};
+
+service.urnify = (id) => Buffer.from(id).toString("base64").replace(/=/g, "");
