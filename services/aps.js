@@ -39,3 +39,49 @@ service.getViewerToken = async () => {
     [Scopes.ViewablesRead]
   );
 };
+
+service.ensureBucketExists = async (bucketKey) => {
+  const accessToken = await getInternalToken();
+  try {
+    await ossClient.getBucketDetails(bucketKey, { accessToken });
+  } catch (error) {
+    if (error.axiosError.response.status === 404) {
+      await ossClient.createBucket(
+        Region.Us,
+        { bucketKey: bucketKey, policyKey: PolicyKey.Persistent },
+        { accessToken }
+      );
+    } else {
+      throw error;
+    }
+  }
+};
+
+service.listObjects = async () => {
+  await service.ensureBucketExists(APS_BUCKET);
+  const accessToken = await getInternalToken();
+  let response = await ossClient.getObjects(APS_BUCKET, {
+    limit: 64,
+    accessToken,
+  });
+  let objects = response.items;
+  while (response.next) {
+    const startAt = new URL(response.next).searchParams.get("startAt");
+    response = await ossClient.getObjects(APS_BUCKET, {
+      limit: 64,
+      startAt,
+      accessToken,
+    });
+    objects = objects.concat(response.items);
+  }
+  return objects;
+};
+
+service.uploadObject = async (objectName, filePath) => {
+  await service.ensureBucketExists(APS_BUCKET);
+  const accessToken = await getInternalToken();
+  const obj = await ossClient.uploadObject(APS_BUCKET, objectName, filePath, {
+    accessToken,
+  });
+  return obj;
+};
